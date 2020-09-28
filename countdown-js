@@ -1,0 +1,838 @@
+<div data-section-id="{{ section.id }}" data-section-type="sale-countdown" id="timerSection">
+   <div class="container">
+      <div class="sale-countdown">
+         <h3 style="text-align:center;">{{ section.settings.title }}</h3>
+         <div class="mt30">
+            <div class="row">
+               <div id="del-countdown">
+                  <div id="clock">
+                     <div id="Days">1</div>
+                     <div>2</div>
+                     <div>3</div>
+                     <div>4</div>
+                  </div>
+                  <div id="units">
+                     <div id="Days">Days</div>
+                     <div>Hours</div>
+                     <div>Minutes</div>
+                     <div>Seconds</div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+   </div>
+</div>
+<style>
+#del-countdown {
+	width: 635px;
+	margin: auto;
+}
+
+@media(max-width:768px) {
+	#del-countdown {
+		width: 100%;
+		margin: auto;
+	}
+}
+
+#clock span {
+	float: left;
+	text-align: center;
+	font-size: 84px;
+	margin: 0 2.5%;
+	color: #fff;
+	padding: 20px;
+	width: 20%;
+	border-radius: 120px;
+	box-sizing: border-box;
+	font-family: arial;
+}
+
+#clock:after {
+	content: "";
+	display: block;
+	clear: both;
+}
+
+#units span {
+	float: left;
+	width: 25%;
+	text-align: center;
+	margin-top: 30px;
+	color: {
+		{
+			section.settings.color_units
+		}
+	}
+	;
+	text-transform: uppercase;
+	font-size: 20px;
+	letter-spacing: 1px;
+	font-weight:800;
+	padding-bottom:40px;
+}
+
+div.turn {
+	animation: turn 0.7s ease forwards;
+}
+
+@keyframes turn {
+	0% {
+		transform: rotateX(0deg)
+	}
+	100% {
+		transform: rotate(360deg)
+	}
+}
+
+div#clock div {
+	font-size: 86px;
+	background: {
+		{
+			section.settings.color_clock
+		}
+	}
+	;
+	border-radius: 120px;
+	margin: 0 2.5%;
+	flex:1;
+}
+
+div#units div {
+	text-align: center;
+	flex: 1;
+}
+
+#clock,
+#units {
+	display: flex;
+	text-align: center;
+	justify-content: center;
+	align-items: center;
+}
+</style>
+<script>
+function updateTimer(deadline) {
+    var time = deadline - new Date();
+    return {
+        'days': Math.floor(time / (1000 * 60 * 60 * 24)),
+        'hours': Math.floor((time / (1000 * 60 * 60)) % 24),
+        'minutes': Math.floor((time / 1000 / 60) % 60),
+        'seconds': Math.floor((time / 1000) % 60),
+        'total': time
+    };
+}
+
+
+function animateClock(span) {
+    span.className = "turn";
+    setTimeout(function() {
+        span.className = "";
+    }, 700);
+}
+
+function startTimer(id, deadline, now) {
+    var timerInterval = setInterval(function() {
+        var clock = document.getElementById(id);
+        var timer = updateTimer(deadline);
+        var units = document.getElementById("Days");
+        if (timer.days == 0) {
+            units.style.display = "none";
+            clock.innerHTML = '<div style="display:none;">' + timer.days + '</div>' +
+                '<div>' + timer.hours + '</div>' +
+                '<div>' + timer.minutes + '</div>' +
+                '<div>' + timer.seconds + '</div>';
+        } else {
+            clock.innerHTML = '<div>' + timer.days + '</div>' +
+                '<div>' + timer.hours + '</div>' +
+                '<div>' + timer.minutes + '</div>' +
+                '<div>' + timer.seconds + '</div>';
+        }
+        //animations
+        var spans = clock.getElementsByTagName("div");
+        animateClock(spans[3]);
+        if (timer.seconds == 59) animateClock(spans[2]);
+        if (timer.minutes == 59 && timer.seconds == 59) animateClock(spans[1]);
+        if (timer.hours == 23 && timer.minutes == 59 && timer.seconds == 59) animateClock(spans[0]);
+
+        //check for end of timer
+        if (timer.total < 1) {
+            clearInterval(timerInterval);
+            clock.style.display = 'none';
+            spans.style.display = 'none';
+            document.querySelector('#timerSection').style.display = 'none';
+        }
+
+
+    }, 1000);
+}
+
+function deadline() {
+    var deadline = new Date("{{section.settings.countdown_month}} {{section.settings.countdown_day}}, {{ section.settings.countdown_year }} {{ section.settings.countdown_time }}");
+    var now = new Date();
+    var eventDateLive = new Date("{{ section.settings.publish_month }} {{ section.settings.publish_day}}, {{section.settings.publish_year }} {{ section.settings.publish_date}}");
+
+    if (now == eventDateLive || now > eventDateLive && now < deadline) {
+        startTimer("clock", deadline, now);
+        var timerSection = document.getElementById("timerSection");
+        timerSection.style.display = "block";
+    } else if (now < eventDateLive || now > eventDateLive || now == deadline) {
+        var timerSection = document.getElementById("timerSection");
+        timerSection.style.display = "none";
+    }
+
+};
+deadline();
+</script>
+{% schema %}
+ {
+  "name": {
+    "en": "Countdown"
+  },
+  "class": "index-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": {
+        "en": "Heading Text"
+      },
+      "default": {
+        "en": "Heading"
+      }
+    },
+      {
+        "type": "color",
+        "id": "color_units",
+        "label": "Units",
+        "default": "#00bbdd"
+      },
+      {
+        "type": "color",
+        "id": "color_clock",
+        "label": "Clock color",
+        "default": "#00bbdd"
+      },
+      {
+        
+        "type": "header",
+        "content": "Countdown to:"
+      },
+      {
+        "type": "select",
+        "id": "countdown_month",
+        "label": "Month",
+        "options": [
+          {
+            "value": "January",
+            "label": "January"
+          },
+          {
+            "value": "February",
+            "label": "February"
+          },
+		  {
+            "value": "March",
+            "label": "March"
+          },
+          {
+            "value": "April",
+            "label": "April"
+          },
+		  {
+            "value": "May",
+            "label": "May"
+          },
+		  {
+            "value": "June",
+            "label": "June"
+          },
+		  {
+            "value": "July",
+            "label": "July"
+          },
+          {
+            "value": "August",
+            "label": "August"
+          },
+		  {
+            "value": "September",
+            "label": "September"
+          },
+          {
+            "value": "October",
+            "label": "October"
+          },
+		  {
+            "value": "November",
+            "label": "November"
+          },
+          {
+            "value" : "December",
+            "label" : "December"
+          }
+        ],
+        "default": "January"
+       
+      },	 
+      {
+        "type": "select",
+        "id": "countdown_day",
+        "label": "Day",
+        "options": [
+          {
+            "value": "1",
+            "label": "1st"
+          },
+          {
+            "value": "2",
+            "label": "2nd"
+          },
+		  {
+            "value": "3",
+            "label": "3rd"
+          },
+          {
+            "value": "4",
+            "label": "4th"
+          },
+		  {
+            "value": "5",
+            "label": "5th"
+          },
+		  {
+            "value": "6",
+            "label": "6th"
+          },
+		  {
+            "value": "7",
+            "label": "7th"
+          },
+          {
+            "value": "8",
+            "label": "8th"
+          },
+		  {
+            "value": "9",
+            "label": "9th"
+          },
+          {
+            "value": "10",
+            "label": "10th"
+          },
+		  {
+            "value": "11",
+            "label": "11th"
+          },
+          {
+            "value" : "12",
+            "label" : "12th"
+          },
+          {
+            "value": "13",
+            "label": "13th"
+          },
+          {
+            "value": "14",
+            "label": "14th"
+          },
+          {
+            "value": "15",
+            "label": "15th"
+          },
+          {
+            "value": "16",
+            "label": "16th"
+          },
+          {
+            "value": "17",
+            "label": "17th"
+          },
+          {
+            "value": "18",
+            "label": "18th"
+          },
+          {
+            "value": "19",
+            "label": "19th"
+          },
+          {
+            "value": "20",
+            "label": "20th"
+          },
+          {
+            "value": "21",
+            "label": "21st"
+          },
+          {
+            "value": "22",
+            "label": "22nd"
+          },
+          {
+            "value": "23",
+            "label": "23rd"
+          },
+          {
+            "value": "24",
+            "label": "24th"
+          },
+          {
+            "value": "25",
+            "label": "25th"
+          },
+          {
+            "value": "26",
+            "label": "26th"
+          },
+          {
+            "value": "27",
+            "label": "27th"
+          },
+          {
+            "value": "28",
+            "label": "28th"
+          },
+          {
+            "value": "29",
+            "label": "29th"
+          },
+          {
+            "value": "30",
+            "label": "30th"
+          },
+          {
+            "value": "31",
+            "label": "31st"
+          }
+         
+        ],
+        "default": "1"
+       
+      },
+      {
+        "type": "select",
+        "id": "countdown_time",
+        "label": "Time",
+        "options": [
+          {
+            "value": "00:00:00",
+            "label": "00:00 AM"
+          },
+          {
+            "value": "01:00:00",
+            "label": "01:00 AM"
+          },
+          {
+            "value": "02:00:00",
+            "label": "02:00 AM"
+          },
+          {
+            "value": "03:00:00",
+            "label": "03:00 AM"
+          },
+          {
+            "value": "04:00:00",
+            "label": "04:00 AM"
+          },
+          {
+            "value": "05:00:00",
+            "label": "05:00 AM"
+          },
+          {
+            "value": "06:00:00",
+            "label": "06:00 AM"
+          },
+          {
+            "value": "07:00:00",
+            "label": "07:00 AM"
+          },
+          {
+            "value": "08:00:00",
+            "label": "08:00 AM"
+          },
+          {
+            "value": "09:00:00",
+            "label": "09:00 AM"
+          },
+          {
+            "value": "10:00:00",
+            "label": "10:00 AM"
+          },
+          {
+            "value": "11:00:00",
+            "label": "11:00:00 AM"
+          },
+          {
+            "value": "12:00:00",
+            "label": "12 AM"
+          },
+          {
+            "value": "13:00:00",
+            "label": "1 PM"
+          },
+          { 
+            "value": "14:00:00",
+            "label": "2 PM"
+          },
+          {
+            "value": "15:00:00",
+            "label": "3 PM"
+          },
+          { 
+            "value": "16:00:00",
+            "label": "4 PM"
+          },
+          { 
+            "value": "17:00:00",
+            "label": "5 PM"
+          },
+          {
+            "value": "23:59:59",
+            "label": "Midnight"
+          }
+         
+        ],
+        "default": "23:59:59"
+       
+      },
+      {
+        "type": "select",
+        "id": "countdown_year",
+        "label": "Year",
+        "options": [
+          {
+            "value": "2019",
+            "label": "2019"
+          },
+          {
+            "value": "2020",
+            "label": "2020"
+          },
+          {
+            "value": "2021",
+            "label": "2021"
+          }
+         ],
+        "default": "2019"
+       
+      },
+      {
+        
+        "type": "header",
+        "content": "Countdown will show at exactly this date:"
+      },
+      {
+        "type": "select",
+        "id": "publish_day",
+        "label": "Publish Day",
+        "options": [
+           {
+            "value": "1",
+            "label": "1st"
+          },
+          {
+            "value": "2",
+            "label": "2nd"
+          },
+		  {
+            "value": "3",
+            "label": "3rd"
+          },
+          {
+            "value": "4",
+            "label": "4th"
+          },
+		  {
+            "value": "5",
+            "label": "5th"
+          },
+		  {
+            "value": "6",
+            "label": "6th"
+          },
+		  {
+            "value": "7",
+            "label": "7th"
+          },
+          {
+            "value": "8",
+            "label": "8th"
+          },
+		  {
+            "value": "9",
+            "label": "9th"
+          },
+          {
+            "value": "10",
+            "label": "10th"
+          },
+		  {
+            "value": "11",
+            "label": "11th"
+          },
+          {
+            "value" : "12",
+            "label" : "12th"
+          },
+          {
+            "value": "13",
+            "label": "13th"
+          },
+          {
+            "value": "14",
+            "label": "14th"
+          },
+          {
+            "value": "15",
+            "label": "15th"
+          },
+          {
+            "value": "16",
+            "label": "16th"
+          },
+          {
+            "value": "17",
+            "label": "17th"
+          },
+          {
+            "value": "18",
+            "label": "18th"
+          },
+          {
+            "value": "19",
+            "label": "19th"
+          },
+          {
+            "value": "20",
+            "label": "20th"
+          },
+          {
+            "value": "21",
+            "label": "21st"
+          },
+          {
+            "value": "22",
+            "label": "22nd"
+          },
+          {
+            "value": "23",
+            "label": "23rd"
+          },
+          {
+            "value": "24",
+            "label": "24th"
+          },
+          {
+            "value": "25",
+            "label": "25th"
+          },
+          {
+            "value": "26",
+            "label": "26th"
+          },
+          {
+            "value": "27",
+            "label": "27th"
+          },
+          {
+            "value": "28",
+            "label": "28th"
+          },
+          {
+            "value": "29",
+            "label": "29th"
+          },
+          {
+            "value": "30",
+            "label": "30th"
+          },
+          {
+            "value": "31",
+            "label": "31st"
+          }
+         
+          
+         ],
+        "default": "1"
+       
+      },
+      
+      {
+        "type": "select",
+        "id": "publish_month",
+        "label": "Publish Month",
+        "options": [
+         {
+            "value": "January",
+            "label": "January"
+          },
+          {
+            "value": "February",
+            "label": "February"
+          },
+		  {
+            "value": "March",
+            "label": "March"
+          },
+          {
+            "value": "April",
+            "label": "April"
+          },
+		  {
+            "value": "May",
+            "label": "May"
+          },
+		  {
+            "value": "June",
+            "label": "June"
+          },
+		  {
+            "value": "July",
+            "label": "July"
+          },
+          {
+            "value": "August",
+            "label": "August"
+          },
+		  {
+            "value": "September",
+            "label": "September"
+          },
+          {
+            "value": "October",
+            "label": "October"
+          },
+		  {
+            "value": "November",
+            "label": "November"
+          },
+          {
+            "value" : "December",
+            "label" : "December"
+          }
+         ],
+        "default": "January"
+       
+      },
+      {
+        "type": "select",
+        "id": "publish_date",
+        "label": "Publish Time",
+        "options": [
+          {
+            "value": "00:00:00",
+            "label": "00:00 AM"
+          },
+          {
+            "value": "01:00:00",
+            "label": "01:00 AM"
+          },
+          {
+            "value": "02:00:00",
+            "label": "02:00 AM"
+          },
+          {
+            "value": "03:00:00",
+            "label": "03:00 AM"
+          },
+          {
+            "value": "04:00:00",
+            "label": "04:00 AM"
+          },
+          {
+            "value": "05:00:00",
+            "label": "05:00 AM"
+          },
+          {
+            "value": "06:00:00",
+            "label": "06:00 AM"
+          },
+          {
+            "value": "07:00:00",
+            "label": "07:00 AM"
+          },
+          {
+            "value": "08:00:00",
+            "label": "08:00 AM"
+          },
+          {
+            "value": "09:00:00",
+            "label": "09:00 AM"
+          },
+          {
+            "value": "10:00:00",
+            "label": "10:00 AM"
+          },
+          {
+            "value": "11:00:00",
+            "label": "11:00:00 AM"
+          },
+          {
+            "value": "12:00:00",
+            "label": "12 AM"
+          },
+          {
+            "value": "13:00:00",
+            "label": "1 PM"
+          },
+          { 
+            "value": "14:00:00",
+            "label": "2 PM"
+          },
+          {
+            "value": "15:00:00",
+            "label": "3 PM"
+          },
+          { 
+            "value": "16:00:00",
+            "label": "4 PM"
+          },
+          { 
+            "value": "17:00:00",
+            "label": "5 PM"
+          },
+          {
+            "value": "23:59:59",
+            "label": "Midnight"
+          }
+         
+        ],
+        "default": "23:59:59"
+       
+      },
+      {
+        "type": "select",
+        "id": "publish_year",
+        "label": "Publish Year",
+        "options": [
+          
+          {
+            "value": "2020",
+            "label": "2020"
+          },
+          {
+            "value": "2021",
+            "label": "2021"
+          }
+         ],
+        "default": "2020"
+       
+      }
+           
+  ],
+
+      
+      
+  "presets": [
+    {
+      "name": {
+        "en": "Countdown"
+      },
+      "category": {
+        "en": "Scripts"
+      }
+    }
+  ]
+}
+{% endschema %}
